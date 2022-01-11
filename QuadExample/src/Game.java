@@ -16,6 +16,7 @@ import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 import org.newdawn.slick.util.ResourceLoader;
 import java.awt.Font;
+
 public class Game {
 
 	public static final String GAME_TITLE = "My Game";
@@ -26,24 +27,18 @@ public class Game {
 	private static final int MAX_LIFES = 3;
 	private static final int MAX_TREASURES_COUNT = 10;
 	private static final int MAX_MINES_COUNT = 5;
-	private static final int HERO_START_Y = 50;
-	private static final int HERO_START_X = 50;
 	private boolean finished;
 	private LevelTile[] levelTile = new LevelTile[MAX_LEVEL];
 	private ArrayList<Entity> entities;
 	private HashMap<Integer, ArrayList<Entity>> levelsTreasures;
 	private HashMap<Integer, ArrayList<Entity>> levelsMines;
 	private HeroEntity heroEntity;
+	private TreasureEntity treasureEntity;
 	private int currentLevel = 1;
 	private int lifes = MAX_LIFES;
 	private TrueTypeFont font;
 	private int treasuresCollected = 0;
 
-	/**
-	 * Application init
-	 * 
-	 * @param args Commandline args
-	 */
 	public static void main(String[] args) {
 		Game myGame = new Game();
 		myGame.start();
@@ -62,15 +57,7 @@ public class Game {
 		System.exit(0);
 	}
 
-	/**
-	 * Initialise the game
-	 * 
-	 * @throws Exception if init fails
-	 */
 	private void init() throws Exception {
-		// Create a fullscreen window with 1:1 orthographic 2D projection, and
-		// with
-		// mouse, keyboard, and gamepad inputs.
 		try {
 			initGL(SCREEN_SIZE_WIDTH, SCREEN_SIZE_HEIGHT);
 			initTextures();
@@ -78,15 +65,6 @@ public class Game {
 			e.printStackTrace();
 			finished = true;
 		}
-//		try {
-//			tile.texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/tile_1.png"));
-//			avatar.texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/avatar.png"));
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//			finished = true;
-//		}
-
 	}
 
 	private void initGL(int width, int height) {
@@ -96,7 +74,6 @@ public class Game {
 			Display.setFullscreen(false);
 			Display.create();
 
-			// Enable vsync if we can
 			Display.setVSyncEnabled(true);
 
 			// Start up the sound system
@@ -129,39 +106,25 @@ public class Game {
 	private void initTextures() throws IOException {
 		entities = new ArrayList<Entity>();
 		initLevels();
-		Texture texture;
-
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/avatar.png"));
+//		Texture texture;
+//		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/avatar.png"));
 
 		initTreasures();
 	}
-	
+
 	private void initLevels() throws IOException {
 		Texture texture;
-		
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/tile_1.png"));
+
+		texture = TextureLoader.getTexture("JPG", ResourceLoader.getResourceAsStream("res/background.jpg"));
 		levelTile[0] = new LevelTile(texture);
-
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/tile_2.png"));
-		levelTile[1] = new LevelTile(texture);
-
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/tile_3.png"));
-		levelTile[2] = new LevelTile(texture);
-
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/tile_4.png"));
-		levelTile[3] = new LevelTile(texture);
-
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/tile_5.png"));
-		levelTile[4] = new LevelTile(texture);
-
-//		texture = TextureLoader.getTexture("PNG", 
-//				ResourceLoader.getResourceAsStream("res/chest.png"));
 	}
 
 	private void initTreasures() throws IOException {
 		Texture texture;
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/avatar.png"));
-		heroEntity = new HeroEntity(this, new MySprite(texture), Display.getDisplayMode().getWidth() / 2 - texture.getImageWidth() / 2, Display.getDisplayMode().getHeight() - texture.getImageHeight());
+		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/cyndraquil.png"));
+		heroEntity = new HeroEntity(this, new MySprite(texture),
+				Display.getDisplayMode().getWidth() / 2 - texture.getImageWidth() / 2,
+				Display.getDisplayMode().getHeight() - texture.getImageHeight());
 		levelsTreasures = new HashMap<Integer, ArrayList<Entity>>();
 		levelsMines = new HashMap<Integer, ArrayList<Entity>>();
 
@@ -170,16 +133,14 @@ public class Game {
 			levelTreasures = new ArrayList<Entity>();
 			levelsTreasures.put(i, levelTreasures);
 		}
-
 		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/gift.png"));
 		Random rand = new Random();
-		int objectX;
-		int objectY;
+		int randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
+		treasureEntity = new TreasureEntity(new MySprite(texture), randomX, 0 - texture.getImageHeight());
 		for (int i = 0; i < MAX_LEVEL; i++) {
 			for (int m = 0; m < MAX_TREASURES_COUNT; m++) {
-				objectX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
-				objectY = rand.nextInt(SCREEN_SIZE_HEIGHT - texture.getImageHeight());
-				TreasureEntity objectEntity = new TreasureEntity(new MySprite(texture), objectX, objectY);
+				randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
+				TreasureEntity objectEntity = new TreasureEntity(new MySprite(texture), randomX, 0);
 
 				levelTreasures = levelsTreasures.get(i);
 				levelTreasures.add(objectEntity);
@@ -199,22 +160,13 @@ public class Game {
 
 		for (int i = 0; i < MAX_LEVEL; i++) {
 			for (int m = 0; m < MAX_MINES_COUNT; m++) {
-				objectX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
-				objectY = rand.nextInt(SCREEN_SIZE_HEIGHT - texture.getImageHeight());
-				MineEntity objectEntity = new MineEntity(new MySprite(texture), objectX, objectY);
+				randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
+				MineEntity objectEntity = new MineEntity(new MySprite(texture), randomX, 0);
 
 				levelMines = levelsMines.get(i);
 				levelMines.add(objectEntity);
 			}
 		}
-
-//		private void initTreasures() {
-//		// TODO Auto-generated method stub
-//		
-//	}
-//		ObjectEntity objectEntity = new ObjectEntity(new MySprite(texture),
-//				200, 200);
-//		entities.add(objectEntity);
 
 		System.out.println("Hero texture width: " + heroEntity.getWidth());
 		System.out.println("Hero texture height: " + heroEntity.getHeight());
@@ -274,8 +226,8 @@ public class Game {
 			finished = true;
 		}
 		if (lifes > 0) {
+			logicTreasure();
 			logicHero();
-
 			checkForCollision();
 		}
 
@@ -331,14 +283,20 @@ public class Game {
 	private void render() {
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
 		Color.white.bind();
-		
+
 		drawLevel();
 
 		drawObjects();
 
 		heroEntity.draw();
-
-		drawHUD();
+		treasureEntity.draw();
+				
+		try {
+			drawHUD();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 //		LevelTile currentLevelTile;
 //		currentLevelTile = levelTile[currentLevel - 1];
@@ -363,7 +321,7 @@ public class Game {
 //		Color.white.bind();
 //		heroEntity.draw();
 	}
-	
+
 	private void drawLevel() {
 		// TODO Auto-generated method stub
 		LevelTile currentLevelTile;
@@ -377,7 +335,7 @@ public class Game {
 			}
 		}
 	}
-	
+
 	private void drawObjects() {
 		ArrayList<Entity> levelTreasures = levelsTreasures.get(currentLevel - 1);
 		for (Entity entity : levelTreasures) {
@@ -393,51 +351,68 @@ public class Game {
 			}
 		}
 	}
-	
-	private void drawHUD() { 
-		font.drawString(10, 0, String.format("Score: %d/%d", treasuresCollected, MAX_TREASURES_COUNT * MAX_LEVEL), Color.black);
 
-		font.drawString(SCREEN_SIZE_WIDTH - 120, 0, String.format("Lifes: %d/%d", lifes, MAX_LIFES), Color.black); 
+	private void drawHUD() throws IOException {
+		Texture lifesTexture;
+		lifesTexture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/heart.png"));
+		font.drawString(10, 0, String.format("Score: %d", treasuresCollected * 10),
+				Color.black);
+
+		font.drawString(SCREEN_SIZE_WIDTH - 120, 0, String.format("Lifes: %d/%d", lifes, MAX_LIFES), Color.black);
+		for (int i = 0; i < MAX_LIFES; i++) {
+			ObjectEntity lifesEntity = new ObjectEntity(new MySprite(lifesTexture), SCREEN_SIZE_WIDTH - 2 * i * lifesTexture.getImageWidth(), 0 + 2 * lifesTexture.getImageHeight());
+			lifesEntity.draw();
+		}
 	}
-	
+
 	private void logicHero() {
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
 			if (heroEntity.getX() + heroEntity.getWidth() + 10 < Display.getDisplayMode().getWidth()) {
 				heroEntity.setX(heroEntity.getX() + 10);
-			} else {
-				if (currentLevel < MAX_LEVEL) {
-					heroEntity.setX(0);
-					currentLevel++;
-				}
 			}
+//			else {
+//				if (currentLevel < MAX_LEVEL) {
+//					heroEntity.setX(0);
+//					currentLevel++;
+//				}
+//			}
 		}
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
 			if (heroEntity.getX() - 10 >= 0) {
 				heroEntity.setX(heroEntity.getX() - 10);
-			} else {
-				if (currentLevel > 1) {
-					currentLevel--;
-					heroEntity.setX(Display.getDisplayMode().getWidth() - heroEntity.getWidth());
-				}
 			}
+//			else {
+//				if (currentLevel > 1) {
+//					currentLevel--;
+//					heroEntity.setX(Display.getDisplayMode().getWidth() - heroEntity.getWidth());
+//				}
+//			}
 		}
 
-		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-			if (heroEntity.getY() > 0) {
-				heroEntity.setY(heroEntity.getY() - 10);
-			}
-		}
-
-		if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-			if (heroEntity.getY() + heroEntity.getHeight() < Display.getDisplayMode().getHeight()) {
-				heroEntity.setY(heroEntity.getY() + 10);
-			}
-		}
-
+		// up and down movement
+//		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
+//			if (heroEntity.getY() > 0) {
+//				heroEntity.setY(heroEntity.getY() - 10);
+//			}
+//		}
+//
+//		if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
+//			if (heroEntity.getY() + heroEntity.getHeight() < Display.getDisplayMode().getHeight()) {
+//				heroEntity.setY(heroEntity.getY() + 10);
+//			}
+//		}
 	}
-	
+
+	private void logicTreasure() {
+		if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
+			if (treasureEntity.getY() + treasureEntity.getHeight() < Display.getDisplayMode().getHeight()) {
+				treasureEntity.setY(treasureEntity.getY() + 5);
+			}
+		}
+	}
+
 	private void checkForCollision() {
 		for (int p = 0; p < entities.size(); p++) {
 			for (int s = p + 1; s < entities.size(); s++) {

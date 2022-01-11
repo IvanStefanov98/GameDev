@@ -167,7 +167,7 @@ public class Game {
 				levelMines.add(objectEntity);
 			}
 		}
-
+		
 		System.out.println("Hero texture width: " + heroEntity.getWidth());
 		System.out.println("Hero texture height: " + heroEntity.getHeight());
 	}
@@ -358,9 +358,10 @@ public class Game {
 		font.drawString(10, 0, String.format("Score: %d", treasuresCollected * 10),
 				Color.black);
 
-		font.drawString(SCREEN_SIZE_WIDTH - 120, 0, String.format("Lifes: %d/%d", lifes, MAX_LIFES), Color.black);
+		font.drawString(SCREEN_SIZE_WIDTH - 160, 0, String.format("Lifes:"), Color.black);
+		font.drawString(SCREEN_SIZE_WIDTH, 0, String.format(""), Color.red);
 		for (int i = 0; i < MAX_LIFES; i++) {
-			ObjectEntity lifesEntity = new ObjectEntity(new MySprite(lifesTexture), SCREEN_SIZE_WIDTH - 2 * i * lifesTexture.getImageWidth(), 0 + 2 * lifesTexture.getImageHeight());
+			ObjectEntity lifesEntity = new ObjectEntity(new MySprite(lifesTexture), SCREEN_SIZE_WIDTH - i * lifesTexture.getImageWidth() - 40, 3);
 			lifesEntity.draw();
 		}
 	}
@@ -410,6 +411,9 @@ public class Game {
 			if (treasureEntity.getY() + treasureEntity.getHeight() < Display.getDisplayMode().getHeight()) {
 				treasureEntity.setY(treasureEntity.getY() + 5);
 			}
+			else {
+				treasureEntity.setVisible(false);
+			}
 		}
 	}
 
@@ -445,15 +449,6 @@ public class Game {
 
 			}
 		}
-
-//		Entity me = heroEntity;
-//		Entity him;
-//		for (int p = 0; p < entities.size(); p++) {
-//			him = entities.get(p);
-//
-//			if (me.collidesWith(him)) {
-//				me.collidedWith(him);
-//				him.collidedWith(me);
 	}
 
 	public void notifyTreasureCollected(Entity notifier, Object object) {

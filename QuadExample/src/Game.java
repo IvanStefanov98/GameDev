@@ -3,6 +3,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
+import javax.swing.JLabel;
+import javax.swing.JTextArea;
+
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
@@ -209,8 +212,6 @@ public class Game {
 	 * Do any game-specific cleanup
 	 */
 	private void cleanup() {
-		// TODO: save anything you want to disk here
-
 		// Stop the sound
 		AL.destroy();
 
@@ -294,7 +295,6 @@ public class Game {
 		try {
 			drawHUD();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -323,7 +323,6 @@ public class Game {
 	}
 
 	private void drawLevel() {
-		// TODO Auto-generated method stub
 		LevelTile currentLevelTile;
 		currentLevelTile = levelTile[currentLevel - 1];
 		currentLevelTile.getTexture().bind();
@@ -354,15 +353,34 @@ public class Game {
 
 	private void drawHUD() throws IOException {
 		Texture lifesTexture;
+		Texture texture;
+		int score = treasuresCollected * 10;
 		lifesTexture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/heart.png"));
-		font.drawString(10, 0, String.format("Score: %d", treasuresCollected * 10),
+		font.drawString(10, 0, String.format("Score: %d", score),
 				Color.black);
 
 		font.drawString(SCREEN_SIZE_WIDTH - 160, 0, String.format("Lifes:"), Color.black);
 		font.drawString(SCREEN_SIZE_WIDTH, 0, String.format(""), Color.red);
-		for (int i = 0; i < MAX_LIFES; i++) {
+		for (int i = 0; i < lifes; i++) {
 			ObjectEntity lifesEntity = new ObjectEntity(new MySprite(lifesTexture), SCREEN_SIZE_WIDTH - i * lifesTexture.getImageWidth() - 40, 3);
 			lifesEntity.draw();
+		}
+		if (lifes == 0) {
+			font.drawString(SCREEN_SIZE_WIDTH, SCREEN_SIZE_HEIGHT, String.format(""), Color.white);
+			texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/dialog.png"));
+			ObjectEntity dialog = new ObjectEntity(new MySprite(texture), 
+					SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 2, 
+					SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2);
+			dialog.draw();
+			font.drawString(SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 4 + 40, SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 30, String.format("Game Over"), Color.black);
+			font.drawString(SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 4 + 45, SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 90, String.format("Score: %d", score), Color.black);
+			font.drawString(SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 2 + 20, SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 150, String.format("Press Enter to restart the game"), Color.black);
+			if (Keyboard.isKeyDown(Keyboard.KEY_RETURN)) {
+				cleanup();
+				lifes = MAX_LIFES;
+				treasuresCollected = 0;
+				start();
+			}
 		}
 	}
 
@@ -393,17 +411,17 @@ public class Game {
 		}
 
 		// up and down movement
-//		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-//			if (heroEntity.getY() > 0) {
-//				heroEntity.setY(heroEntity.getY() - 10);
-//			}
-//		}
-//
-//		if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-//			if (heroEntity.getY() + heroEntity.getHeight() < Display.getDisplayMode().getHeight()) {
-//				heroEntity.setY(heroEntity.getY() + 10);
-//			}
-//		}
+		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
+			if (heroEntity.getY() > 0) {
+				heroEntity.setY(heroEntity.getY() - 10);
+			}
+		}
+
+		if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
+			if (heroEntity.getY() + heroEntity.getHeight() < Display.getDisplayMode().getHeight()) {
+				heroEntity.setY(heroEntity.getY() + 10);
+			}
+		}
 	}
 
 	private void logicTreasure() {

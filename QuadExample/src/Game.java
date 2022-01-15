@@ -37,6 +37,7 @@ public class Game {
 	private HashMap<Integer, ArrayList<Entity>> levelsMines;
 	private HeroEntity heroEntity;
 	private TreasureEntity treasureEntity;
+	private MineEntity mineEntity;
 	private int currentLevel = 1;
 	private int lifes = MAX_LIFES;
 	private TrueTypeFont font;
@@ -109,9 +110,6 @@ public class Game {
 	private void initTextures() throws IOException {
 		entities = new ArrayList<Entity>();
 		initLevels();
-//		Texture texture;
-//		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/avatar.png"));
-
 		initTreasures();
 	}
 
@@ -139,12 +137,13 @@ public class Game {
 		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/gift.png"));
 		Random rand = new Random();
 		int randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
-		treasureEntity = new TreasureEntity(new MySprite(texture), randomX, 0 - texture.getImageHeight());
+		int y = 0 - texture.getImageHeight();
+		treasureEntity = new TreasureEntity(new MySprite(texture), randomX, y);
 		for (int i = 0; i < MAX_LEVEL; i++) {
 			for (int m = 0; m < MAX_TREASURES_COUNT; m++) {
 				randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
 				TreasureEntity objectEntity = new TreasureEntity(new MySprite(texture), randomX, 0);
-
+				objectEntity.setY(objectEntity.getY() + 10);
 				levelTreasures = levelsTreasures.get(i);
 				levelTreasures.add(objectEntity);
 			}
@@ -160,7 +159,7 @@ public class Game {
 
 		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/bomb.png"));
 		rand = new Random();
-
+		mineEntity = new MineEntity(new MySprite(texture), randomX, y);
 		for (int i = 0; i < MAX_LEVEL; i++) {
 			for (int m = 0; m < MAX_MINES_COUNT; m++) {
 				randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
@@ -170,9 +169,6 @@ public class Game {
 				levelMines.add(objectEntity);
 			}
 		}
-		
-		System.out.println("Hero texture width: " + heroEntity.getWidth());
-		System.out.println("Hero texture height: " + heroEntity.getHeight());
 	}
 
 	/**
@@ -231,51 +227,6 @@ public class Game {
 			logicHero();
 			checkForCollision();
 		}
-
-//		if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
-//			if (heroEntity.getX() + heroEntity.getWidth() + 10 < Display.getDisplayMode().getWidth()) {
-//				heroEntity.setX(heroEntity.getX() + 10);
-//			} else {
-//				if (currentLevel < MAX_LEVEL) {
-//					heroEntity.setX(0);
-//					currentLevel++;
-//				}
-//			}
-//		}
-//
-//		if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-//			if (heroEntity.getX() - 10 >= 0) {
-//				heroEntity.setX(heroEntity.getX() - 10);
-//			} else {
-//				if (currentLevel > 1) {
-//					currentLevel--;
-//					heroEntity.setX(Display.getDisplayMode().getWidth() - heroEntity.getWidth());
-//				}
-//			}
-//		}
-//
-//		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-//			if (heroEntity.getY() > 0) {
-//				heroEntity.setY(heroEntity.getY() - 10);
-//			}
-//		}
-//
-//		if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-//			if (heroEntity.getY() + heroEntity.getHeight() < Display.getDisplayMode().getHeight()) {
-//				heroEntity.setY(heroEntity.getY() + 10);
-//			}
-//		}
-//
-//		for (int p = 0; p < entities.size(); p++) {
-//			for (int s = p + 1; s < entities.size(); s++) {
-//				Entity me = entities.get(p);
-//				Entity him = entities.get(s);
-//				if (me.collidesWith(him)) {
-//					me.collidedWith(him);
-//					him.collidedWith(me);
-//				}
-//			}
-//		}
 	}
 
 	/**
@@ -284,14 +235,25 @@ public class Game {
 	private void render() {
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
 		Color.white.bind();
-
+		
 		drawLevel();
-
+		
 		drawObjects();
-
+		
 		heroEntity.draw();
-		treasureEntity.draw();
-				
+
+		if (treasureEntity.getY() + treasureEntity.getHeight() < Display.getDisplayMode().getHeight()) {
+			treasureEntity.draw();
+			treasureEntity.setY(treasureEntity.getY() + 5);
+			checkForCollision();
+		} else {
+			treasureEntity.setVisible(false);
+			// levelsTreasures.get(currentLevel - 1).remove(treasureEntity);
+		}
+		if (heroEntity.collidesWith(treasureEntity)) {
+			treasureEntity.setVisible(false);
+			treasuresCollected++;
+		}		
 		try {
 			drawHUD();
 		} catch (IOException e) {
@@ -316,10 +278,6 @@ public class Game {
 //				}
 //			}
 //		}
-//		font.drawString(10, 0, "Treasures collected " + treasuresCollected,
-//				Color.black);
-//		Color.white.bind();
-//		heroEntity.draw();
 	}
 
 	private void drawLevel() {
@@ -360,13 +318,13 @@ public class Game {
 				Color.black);
 
 		font.drawString(SCREEN_SIZE_WIDTH - 160, 0, String.format("Lifes:"), Color.black);
-		font.drawString(SCREEN_SIZE_WIDTH, 0, String.format(""), Color.red);
+		Color.red.bind();
 		for (int i = 0; i < lifes; i++) {
 			ObjectEntity lifesEntity = new ObjectEntity(new MySprite(lifesTexture), SCREEN_SIZE_WIDTH - i * lifesTexture.getImageWidth() - 40, 3);
 			lifesEntity.draw();
 		}
 		if (lifes == 0) {
-			font.drawString(SCREEN_SIZE_WIDTH, SCREEN_SIZE_HEIGHT, String.format(""), Color.white);
+			Color.white.bind();
 			texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/dialog.png"));
 			ObjectEntity dialog = new ObjectEntity(new MySprite(texture), 
 					SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 2, 
@@ -390,24 +348,12 @@ public class Game {
 			if (heroEntity.getX() + heroEntity.getWidth() + 10 < Display.getDisplayMode().getWidth()) {
 				heroEntity.setX(heroEntity.getX() + 10);
 			}
-//			else {
-//				if (currentLevel < MAX_LEVEL) {
-//					heroEntity.setX(0);
-//					currentLevel++;
-//				}
-//			}
 		}
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
 			if (heroEntity.getX() - 10 >= 0) {
 				heroEntity.setX(heroEntity.getX() - 10);
 			}
-//			else {
-//				if (currentLevel > 1) {
-//					currentLevel--;
-//					heroEntity.setX(Display.getDisplayMode().getWidth() - heroEntity.getWidth());
-//				}
-//			}
 		}
 
 		// up and down movement

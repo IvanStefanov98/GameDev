@@ -32,7 +32,7 @@ public class Quad {
 			GL11.glColor3f(0.5f, 0.5f, 1.0f);
 
 			// draw quad
-			//x++;
+			x++;
 			GL11.glBegin(GL11.GL_QUADS);
 			GL11.glVertex2f(x, y);
 			GL11.glVertex2f(x + width, y);

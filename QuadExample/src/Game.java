@@ -3,9 +3,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-import javax.swing.JLabel;
-import javax.swing.JTextArea;
-
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
@@ -36,8 +33,6 @@ public class Game {
 	private HashMap<Integer, ArrayList<Entity>> levelsTreasures;
 	private HashMap<Integer, ArrayList<Entity>> levelsMines;
 	private HeroEntity heroEntity;
-	private TreasureEntity treasureEntity;
-	private MineEntity mineEntity;
 	private int currentLevel = 1;
 	private int lifes = MAX_LIFES;
 	private TrueTypeFont font;
@@ -138,14 +133,13 @@ public class Game {
 		Random rand = new Random();
 		int randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
 		int y = 0 - texture.getImageHeight();
-		// treasureEntity = new TreasureEntity(new MySprite(texture), randomX, y);
 		for (int i = 0; i < MAX_TREASURES_COUNT; i++) {
 			for (int m = 0; m < MAX_TREASURES_COUNT; m++) {
 				randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
 				TreasureEntity objectEntity = new TreasureEntity(new MySprite(texture), randomX, y);
-				// objectEntity.setY(objectEntity.getY() + 10);
 				levelTreasures = levelsTreasures.get(i);
 				levelTreasures.add(objectEntity);
+
 			}
 		}
 
@@ -223,61 +217,28 @@ public class Game {
 			finished = true;
 		}
 		if (lifes > 0) {
-			logicTreasure();
 			logicHero();
 			checkForCollision();
 		}
 	}
 
-	/**
-	 * Render the current frame
-	 */
+	// Render frame
+
 	private void render() {
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
 		Color.white.bind();
-
+		
 		drawLevel();
 
 		drawObjects();
 
 		heroEntity.draw();
 
-//		if (treasureEntity.getY() + treasureEntity.getHeight() < Display.getDisplayMode().getHeight()) {
-//			treasureEntity.draw();
-//			treasureEntity.setY(treasureEntity.getY() + 5);
-//			checkForCollision();
-//		} else {
-//			treasureEntity.setVisible(false);
-//			// levelsTreasures.get(currentLevel - 1).remove(treasureEntity);
-//		}
-//		if (heroEntity.collidesWith(treasureEntity)) {
-//			treasureEntity.setVisible(false);
-//			treasuresCollected++;
-//		}
 		try {
 			drawHUD();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-//		LevelTile currentLevelTile;
-//		currentLevelTile = levelTile[currentLevel - 1];
-//		currentLevelTile.getTexture().bind();
-//		for (int a = 0; a * currentLevelTile.getHeight() < SCREEN_SIZE_HEIGHT; a++) {
-//			for (int b = 0; b * currentLevelTile.getWidth() < SCREEN_SIZE_HEIGHT; b++) {
-//				int textureX = currentLevelTile.getWidth() * b;
-//				int textureY = currentLevelTile.getHeight() * a;
-//				currentLevelTile.draw(textureX, textureY);
-//			}
-//		}
-//
-//		if (entities != null) {
-//			for (Entity entity : entities) {
-//				if (entity.isVisible()) {
-//					entity.draw();
-//				}
-//			}
-//		}
 	}
 
 	private void drawLevel() {
@@ -295,33 +256,33 @@ public class Game {
 
 	private void drawObjects() {
 		ArrayList<Entity> levelTreasures = levelsTreasures.get(0);
-		for (Entity entity : levelTreasures) {
+		for (int i = 0; i < levelTreasures.size(); i++) {
+			Entity entity = levelTreasures.get(i);
 			if (entity.isVisible()) {
 				entity.draw();
 			}
 			if (entity.getY() + entity.getHeight() < Display.getDisplayMode().getHeight()) {
-				// entity.draw();
 				entity.setY(entity.getY() + 3);
-				
+
 			} else {
-				// entity.setVisible(false);
-//				levelsTreasures.get(0).remove(entity);
+				entity.setVisible(false);
+				levelsTreasures.get(i).remove(entity);
 			}
-			
+
 		}
 
 		ArrayList<Entity> levelMines = levelsMines.get(0);
-		for (Entity entity : levelMines) {
+		for (int i = 0; i < levelMines.size(); i++) {
+			Entity entity = levelMines.get(i);
 			if (entity.isVisible()) {
 				entity.draw();
 			}
 			if (entity.getY() + entity.getHeight() < Display.getDisplayMode().getHeight()) {
-				// treasureEntity.draw();
 				entity.setY(entity.getY() + 3);
-				
+
 			} else {
-				// entity.setVisible(false);
-//				levelsMines.get(0).remove(entity);
+				entity.setVisible(false);
+				levelsMines.get(i).remove(entity);
 			}
 		}
 	}
@@ -380,25 +341,15 @@ public class Game {
 		}
 
 		// up and down movement
-		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-			if (heroEntity.getY() > 0) {
-				heroEntity.setY(heroEntity.getY() - 10);
-			}
-		}
-
-		if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-			if (heroEntity.getY() + heroEntity.getHeight() < Display.getDisplayMode().getHeight()) {
-				heroEntity.setY(heroEntity.getY() + 10);
-			}
-		}
-	}
-
-	private void logicTreasure() {
+//		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
+//			if (heroEntity.getY() > 0) {
+//				heroEntity.setY(heroEntity.getY() - 10);
+//			}
+//		}
+//
 //		if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-//			if (treasureEntity.getY() + treasureEntity.getHeight() < Display.getDisplayMode().getHeight()) {
-//				treasureEntity.setY(treasureEntity.getY() + 5);
-//			} else {
-//				treasureEntity.setVisible(false);
+//			if (heroEntity.getY() + heroEntity.getHeight() < Display.getDisplayMode().getHeight()) {
+//				heroEntity.setY(heroEntity.getY() + 10);
 //			}
 //		}
 	}

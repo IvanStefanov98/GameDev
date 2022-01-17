@@ -294,11 +294,11 @@ public class Game {
 		lifesTexture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/heart.png"));
 		font.drawString(10, 0, String.format("Score: %d", score), Color.black);
 
-		font.drawString(SCREEN_SIZE_WIDTH - 160, 0, String.format("Lifes:"), Color.black);
+		font.drawString(SCREEN_SIZE_WIDTH - 200, 7, String.format("Lifes:"), Color.black);
 		Color.red.bind();
 		for (int i = 0; i < lifes; i++) {
 			ObjectEntity lifesEntity = new ObjectEntity(new MySprite(lifesTexture),
-					SCREEN_SIZE_WIDTH - i * lifesTexture.getImageWidth() - 40, 3);
+					SCREEN_SIZE_WIDTH - i * lifesTexture.getImageWidth() - 50, 3);
 			lifesEntity.draw();
 		}
 		if (lifes == 0) {
@@ -339,19 +339,6 @@ public class Game {
 				heroEntity.setX(heroEntity.getX() - 10);
 			}
 		}
-
-		// up and down movement
-//		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-//			if (heroEntity.getY() > 0) {
-//				heroEntity.setY(heroEntity.getY() - 10);
-//			}
-//		}
-//
-//		if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-//			if (heroEntity.getY() + heroEntity.getHeight() < Display.getDisplayMode().getHeight()) {
-//				heroEntity.setY(heroEntity.getY() + 10);
-//			}
-//		}
 	}
 
 	private void checkForCollision() {

@@ -1,7 +1,7 @@
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
@@ -25,13 +25,13 @@ public class Game {
 	private static final int FRAMERATE = 60;
 	private static final int MAX_LEVEL = 5;
 	private static final int MAX_LIFES = 3;
-	private static final int MAX_TREASURES_COUNT = 2;
-	private static final int MAX_MINES_COUNT = 2;
+	private static final int MAX_TREASURES_COUNT = 6;
+	private static final int MAX_MINES_COUNT = 4;
+	private static final int MAX_SPAWN_HEIGHT = 500;
 	private boolean finished;
 	private LevelTile[] levelTile = new LevelTile[MAX_LEVEL];
-	private ArrayList<Entity> entities;
-	private HashMap<Integer, ArrayList<Entity>> levelsTreasures;
-	private HashMap<Integer, ArrayList<Entity>> levelsMines;
+	private ArrayList<Entity> gifts;
+	private ArrayList<Entity> bombs;
 	private HeroEntity heroEntity;
 	private int currentLevel = 1;
 	private int lifes = MAX_LIFES;
@@ -107,7 +107,6 @@ public class Game {
 	}
 
 	private void initTextures() throws IOException {
-		entities = new ArrayList<Entity>();
 		initLevels();
 		initObjects();
 	}
@@ -118,50 +117,36 @@ public class Game {
 		texture = TextureLoader.getTexture("JPG", ResourceLoader.getResourceAsStream("res/background.jpg"));
 		levelTile[0] = new LevelTile(texture);
 	}
-	
+
 	private void initGifts() throws IOException {
+		gifts = new ArrayList<Entity>();
 		Texture texture;
 		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/gift.png"));
 		Random rand = new Random();
-		int y = 0 - texture.getImageHeight();
-		levelsTreasures = new HashMap<Integer, ArrayList<Entity>>();
-		ArrayList<Entity> levelTreasures;
-		for (int i = 0; i < MAX_TREASURES_COUNT; i++) {
-			levelTreasures = new ArrayList<Entity>();
-			levelsTreasures.put(i, levelTreasures);
-		}
-		for (int i = 0; i < MAX_TREASURES_COUNT; i++) {
-			for (int m = 0; m < MAX_TREASURES_COUNT; m++) {
-				int randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
-				TreasureEntity objectEntity = new TreasureEntity(new MySprite(texture), randomX, y);
-				levelTreasures = levelsTreasures.get(i);
-				levelTreasures.add(objectEntity);
+		int y;
 
-			}
+		for (int i = 0; i < MAX_TREASURES_COUNT; i++) {
+			int randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
+			y = ThreadLocalRandom.current().nextInt(-MAX_SPAWN_HEIGHT - texture.getImageHeight(), -texture.getImageHeight());
+			TreasureEntity objectEntity = new TreasureEntity(new MySprite(texture), randomX, y);
+			gifts.add(objectEntity);
 		}
 	}
-	
-	private void initBombs() throws IOException {
-		Texture texture;
-		Random rand = new Random();
-		levelsMines = new HashMap<Integer, ArrayList<Entity>>();
-		ArrayList<Entity> levelMines;
-		for (int i = 0; i < MAX_MINES_COUNT; i++) {
-			levelMines = new ArrayList<Entity>();
-			levelsMines.put(i, levelMines);
-		}
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/bomb.png"));
-		int y = 0 - texture.getImageHeight();
-		rand = new Random();
-		for (int i = 0; i < MAX_MINES_COUNT; i++) {
-			for (int m = 0; m < MAX_MINES_COUNT; m++) {
-				int randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
-				MineEntity objectEntity = new MineEntity(new MySprite(texture), randomX, y);
 
-				levelMines = levelsMines.get(i);
-				levelMines.add(objectEntity);
-			}
+	private void initBombs() throws IOException {
+		bombs = new ArrayList<Entity>();
+		Texture texture;
+		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/bomb.png"));
+		Random rand = new Random();
+		int y;
+
+		for (int i = 0; i < MAX_MINES_COUNT; i++) {
+			int randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
+			y = ThreadLocalRandom.current().nextInt(-MAX_SPAWN_HEIGHT - texture.getImageHeight(), -texture.getImageHeight());
+			MineEntity objectEntity = new MineEntity(new MySprite(texture), randomX, y);
+			bombs.add(objectEntity);
 		}
+		
 	}
 
 	private void initObjects() throws IOException {
@@ -170,8 +155,8 @@ public class Game {
 		heroEntity = new HeroEntity(this, new MySprite(texture),
 				Display.getDisplayMode().getWidth() / 2 - texture.getImageWidth() / 2,
 				Display.getDisplayMode().getHeight() - texture.getImageHeight());
-		 initGifts();
-		 initBombs();
+		initGifts();
+		initBombs();
 	}
 
 	/**
@@ -236,7 +221,7 @@ public class Game {
 	private void render() {
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
 		Color.white.bind();
-		
+
 		drawLevel();
 		drawObjects();
 
@@ -263,49 +248,37 @@ public class Game {
 	}
 
 	private void drawObjects() {
-		ArrayList<Entity> levelTreasures = levelsTreasures.get(0);
-		for (int i = 0; i < levelTreasures.size(); i++) {
-			Entity entity = levelTreasures.get(i);
+		for (int i = 0; i < gifts.size(); i++) {
+			Entity entity = gifts.get(i);
 			if (entity.isVisible()) {
 				entity.draw();
 			}
-			
-			// gifts movement
 			if (entity.getY() + entity.getHeight() < Display.getDisplayMode().getHeight()) {
 				entity.setY(entity.getY() + speed);
-			} else {
-				entity.setVisible(false);
-				levelsTreasures.get(i).remove(entity);
 			}
-			if (levelTreasures.size() < MAX_TREASURES_COUNT && lifes > 0) {
-				try {
-					initGifts();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+			if (entity.getY() + heroEntity.getHeight() > Display.getDisplayMode().getHeight()) {
+				Random rand = new Random();
+				int newX = rand.nextInt(SCREEN_SIZE_WIDTH - entity.getWidth());
+				int newY = ThreadLocalRandom.current().nextInt(-MAX_SPAWN_HEIGHT - entity.getHeight(), - entity.getHeight());
+				entity.setX(newX);
+				entity.setY(newY);
 			}
 		}
-
-		ArrayList<Entity> levelMines = levelsMines.get(0);
-		for (int i = 0; i < levelMines.size(); i++) {
-			Entity entity = levelMines.get(i);
+		
+		for (int i = 0; i < bombs.size(); i++) {
+			Entity entity = bombs.get(i);
 			if (entity.isVisible()) {
 				entity.draw();
 			}
-			
-			// bombs movement
 			if (entity.getY() + entity.getHeight() < Display.getDisplayMode().getHeight()) {
 				entity.setY(entity.getY() + speed);
-			} else {
-				entity.setVisible(false);
-				levelsMines.get(i).remove(entity);
 			}
-			if (levelMines.size() < MAX_MINES_COUNT && lifes > 0) {
-				try {
-					initBombs();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+			if (entity.getY() + heroEntity.getHeight() > Display.getDisplayMode().getHeight()) {
+				Random rand = new Random();
+				int newX = rand.nextInt(SCREEN_SIZE_WIDTH - entity.getWidth());
+				int newY = ThreadLocalRandom.current().nextInt(-MAX_SPAWN_HEIGHT - entity.getHeight(), - entity.getHeight());
+				entity.setX(newX);
+				entity.setY(newY);
 			}
 		}
 	}
@@ -318,10 +291,10 @@ public class Game {
 			highScore = score;
 		}
 		lifesTexture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/heart.png"));
-		
+
 		// draw score
 		font.drawString(10, 0, String.format("Score: %d", score), Color.black);
-		
+
 		// draw lifes as hearts
 		font.drawString(SCREEN_SIZE_WIDTH - 200, 7, String.format("Lifes:"), Color.black);
 		Color.red.bind();
@@ -330,7 +303,7 @@ public class Game {
 					SCREEN_SIZE_WIDTH - i * lifesTexture.getImageWidth() - 50, 3);
 			lifesEntity.draw();
 		}
-		
+
 		// draw game over dialog
 		if (lifes == 0) {
 			Color.white.bind();
@@ -346,8 +319,8 @@ public class Game {
 					SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 90, String.format("Score: %d", score),
 					Color.black);
 			font.drawString(SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 4 + 20,
-					SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 120, String.format("High score: %d", highScore),
-					Color.black);
+					SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 120,
+					String.format("High score: %d", highScore), Color.black);
 			font.drawString(SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 2 + 20,
 					SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 170,
 					String.format("Press Enter to restart the game"), Color.black);
@@ -355,6 +328,8 @@ public class Game {
 				cleanup();
 				lifes = MAX_LIFES;
 				treasuresCollected = 0;
+				speed = 3;
+				heroSpeed = 10;
 				start();
 			}
 		}
@@ -373,37 +348,21 @@ public class Game {
 			}
 		}
 	}
-
+	
 	private void checkForCollision() {
-		for (int p = 0; p < entities.size(); p++) {
-			for (int s = p + 1; s < entities.size(); s++) {
-				Entity me = entities.get(p);
-				Entity him = entities.get(s);
-
-				if (me.collidesWith(him)) {
-					me.collidedWith(him);
-					him.collidedWith(me);
-				}
+		for(int i = 0; i < gifts.size(); i++) {
+			Entity entity = gifts.get(i);
+			if(heroEntity.collidesWith(entity)) {
+				heroEntity.collidedWith(entity);
+				entity.collidedWith(heroEntity);
 			}
 		}
-
-		ArrayList<Entity> levelTreasures = levelsTreasures.get(currentLevel - 1);
-		for (int i = 0; i < levelTreasures.size(); i++) {
-			Entity him = levelTreasures.get(i);
-
-			if (heroEntity.collidesWith(him)) {
-				heroEntity.collidedWith(him);
-				him.collidedWith(heroEntity);
-			}
-		}
-		ArrayList<Entity> levelMines = levelsMines.get(currentLevel - 1);
-		for (int i = 0; i < levelMines.size(); i++) {
-			Entity him = levelMines.get(i);
-
-			if (heroEntity.collidesWith(him)) {
-				heroEntity.collidedWith(him);
-				him.collidedWith(heroEntity);
-
+		
+		for(int i = 0; i < bombs.size(); i++) {
+			Entity entity = bombs.get(i);
+			if(heroEntity.collidesWith(entity)) {
+				heroEntity.collidedWith(entity);
+				entity.collidedWith(heroEntity);
 			}
 		}
 	}
@@ -411,9 +370,13 @@ public class Game {
 	public void notifyTreasureCollected(Entity notifier, Object object) {
 		if (object instanceof TreasureEntity) {
 			TreasureEntity treasureEntity = (TreasureEntity) object;
-			levelsTreasures.get(0).remove(treasureEntity);
+			Random rand = new Random();
+			int newX = rand.nextInt(SCREEN_SIZE_WIDTH - treasureEntity.getWidth());
+			int newY = ThreadLocalRandom.current().nextInt(-MAX_SPAWN_HEIGHT - treasureEntity.getHeight(), - treasureEntity.getHeight());
+			treasureEntity.setX(newX);
+			treasureEntity.setY(newY);
 			setTreasuresCollected(getTreasuresCollected() + 1);
-			
+
 			// increase speed
 			if (treasuresCollected % 10 == 0 && treasuresCollected > 0 && speed <= 15) {
 				speed++;
@@ -421,9 +384,14 @@ public class Game {
 			if (treasuresCollected % 20 == 0 && treasuresCollected > 0 && heroSpeed <= 20) {
 				heroSpeed++;
 			}
-			
+
 		} else if (object instanceof MineEntity) {
-			levelsMines.get(0).remove(object);
+			MineEntity mineEntity = (MineEntity) object;
+			Random rand = new Random();
+			int newX = rand.nextInt(SCREEN_SIZE_WIDTH - mineEntity.getWidth());
+			int newY = ThreadLocalRandom.current().nextInt(-MAX_SPAWN_HEIGHT - mineEntity.getHeight(), - mineEntity.getHeight());
+			mineEntity.setX(newX);
+			mineEntity.setY(newY);
 			lifes--;
 		}
 	}

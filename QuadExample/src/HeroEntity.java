@@ -12,7 +12,7 @@ private Object game;
 	@Override
 	public void collidedWith(Entity other) {
 		Game myGame = (Game) game;
-		System.out.println("Collision detected HeroEntity");
+		// System.out.println("Collision detected HeroEntity");
 		myGame.notifyTreasureCollected(this, other);
 	}
 }

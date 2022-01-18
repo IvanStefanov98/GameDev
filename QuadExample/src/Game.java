@@ -25,8 +25,8 @@ public class Game {
 	private static final int FRAMERATE = 60;
 	private static final int MAX_LEVEL = 5;
 	private static final int MAX_LIFES = 3;
-	private static final int MAX_TREASURES_COUNT = 5;
-	private static final int MAX_MINES_COUNT = 3;
+	private static final int MAX_TREASURES_COUNT = 2;
+	private static final int MAX_MINES_COUNT = 2;
 	private boolean finished;
 	private LevelTile[] levelTile = new LevelTile[MAX_LEVEL];
 	private ArrayList<Entity> entities;
@@ -37,6 +37,10 @@ public class Game {
 	private int lifes = MAX_LIFES;
 	private TrueTypeFont font;
 	private int treasuresCollected = 0;
+	private int speed = 3;
+	private int heroSpeed = 10;
+	private int score = 0;
+	private int highScore = 0;
 
 	public static void main(String[] args) {
 		Game myGame = new Game();
@@ -105,7 +109,7 @@ public class Game {
 	private void initTextures() throws IOException {
 		entities = new ArrayList<Entity>();
 		initLevels();
-		initTreasures();
+		initObjects();
 	}
 
 	private void initLevels() throws IOException {
@@ -114,55 +118,60 @@ public class Game {
 		texture = TextureLoader.getTexture("JPG", ResourceLoader.getResourceAsStream("res/background.jpg"));
 		levelTile[0] = new LevelTile(texture);
 	}
-
-	private void initTreasures() throws IOException {
+	
+	private void initGifts() throws IOException {
 		Texture texture;
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/cyndraquil.png"));
-		heroEntity = new HeroEntity(this, new MySprite(texture),
-				Display.getDisplayMode().getWidth() / 2 - texture.getImageWidth() / 2,
-				Display.getDisplayMode().getHeight() - texture.getImageHeight());
+		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/gift.png"));
+		Random rand = new Random();
+		int y = 0 - texture.getImageHeight();
 		levelsTreasures = new HashMap<Integer, ArrayList<Entity>>();
-		levelsMines = new HashMap<Integer, ArrayList<Entity>>();
-
 		ArrayList<Entity> levelTreasures;
-		for (int i = 0; i < MAX_LEVEL; i++) {
+		for (int i = 0; i < MAX_TREASURES_COUNT; i++) {
 			levelTreasures = new ArrayList<Entity>();
 			levelsTreasures.put(i, levelTreasures);
 		}
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/gift.png"));
-		Random rand = new Random();
-		int randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
-		int y = 0 - texture.getImageHeight();
 		for (int i = 0; i < MAX_TREASURES_COUNT; i++) {
 			for (int m = 0; m < MAX_TREASURES_COUNT; m++) {
-				randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
+				int randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
 				TreasureEntity objectEntity = new TreasureEntity(new MySprite(texture), randomX, y);
 				levelTreasures = levelsTreasures.get(i);
 				levelTreasures.add(objectEntity);
 
 			}
 		}
-
+	}
+	
+	private void initBombs() throws IOException {
+		Texture texture;
+		Random rand = new Random();
 		levelsMines = new HashMap<Integer, ArrayList<Entity>>();
-
 		ArrayList<Entity> levelMines;
-		for (int i = 0; i < MAX_LEVEL; i++) {
+		for (int i = 0; i < MAX_MINES_COUNT; i++) {
 			levelMines = new ArrayList<Entity>();
 			levelsMines.put(i, levelMines);
 		}
-
 		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/bomb.png"));
+		int y = 0 - texture.getImageHeight();
 		rand = new Random();
-		// mineEntity = new MineEntity(new MySprite(texture), randomX, y);
 		for (int i = 0; i < MAX_MINES_COUNT; i++) {
 			for (int m = 0; m < MAX_MINES_COUNT; m++) {
-				randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
+				int randomX = rand.nextInt(SCREEN_SIZE_WIDTH - texture.getImageWidth());
 				MineEntity objectEntity = new MineEntity(new MySprite(texture), randomX, y);
 
 				levelMines = levelsMines.get(i);
 				levelMines.add(objectEntity);
 			}
 		}
+	}
+
+	private void initObjects() throws IOException {
+		Texture texture;
+		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/cyndraquil.png"));
+		heroEntity = new HeroEntity(this, new MySprite(texture),
+				Display.getDisplayMode().getWidth() / 2 - texture.getImageWidth() / 2,
+				Display.getDisplayMode().getHeight() - texture.getImageHeight());
+		 initGifts();
+		 initBombs();
 	}
 
 	/**
@@ -229,7 +238,6 @@ public class Game {
 		Color.white.bind();
 		
 		drawLevel();
-
 		drawObjects();
 
 		heroEntity.draw();
@@ -261,14 +269,21 @@ public class Game {
 			if (entity.isVisible()) {
 				entity.draw();
 			}
+			
+			// gifts movement
 			if (entity.getY() + entity.getHeight() < Display.getDisplayMode().getHeight()) {
-				entity.setY(entity.getY() + 3);
-
+				entity.setY(entity.getY() + speed);
 			} else {
 				entity.setVisible(false);
 				levelsTreasures.get(i).remove(entity);
 			}
-
+			if (levelTreasures.size() < MAX_TREASURES_COUNT && lifes > 0) {
+				try {
+					initGifts();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 
 		ArrayList<Entity> levelMines = levelsMines.get(0);
@@ -277,12 +292,20 @@ public class Game {
 			if (entity.isVisible()) {
 				entity.draw();
 			}
+			
+			// bombs movement
 			if (entity.getY() + entity.getHeight() < Display.getDisplayMode().getHeight()) {
-				entity.setY(entity.getY() + 3);
-
+				entity.setY(entity.getY() + speed);
 			} else {
 				entity.setVisible(false);
 				levelsMines.get(i).remove(entity);
+			}
+			if (levelMines.size() < MAX_MINES_COUNT && lifes > 0) {
+				try {
+					initBombs();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -290,10 +313,16 @@ public class Game {
 	private void drawHUD() throws IOException {
 		Texture lifesTexture;
 		Texture texture;
-		int score = treasuresCollected * 10;
+		score = treasuresCollected * 10;
+		if (score > highScore) {
+			highScore = score;
+		}
 		lifesTexture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/heart.png"));
+		
+		// draw score
 		font.drawString(10, 0, String.format("Score: %d", score), Color.black);
-
+		
+		// draw lifes as hearts
 		font.drawString(SCREEN_SIZE_WIDTH - 200, 7, String.format("Lifes:"), Color.black);
 		Color.red.bind();
 		for (int i = 0; i < lifes; i++) {
@@ -301,6 +330,8 @@ public class Game {
 					SCREEN_SIZE_WIDTH - i * lifesTexture.getImageWidth() - 50, 3);
 			lifesEntity.draw();
 		}
+		
+		// draw game over dialog
 		if (lifes == 0) {
 			Color.white.bind();
 			texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("res/dialog.png"));
@@ -308,14 +339,17 @@ public class Game {
 					SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 2,
 					SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2);
 			dialog.draw();
-			font.drawString(SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 4 + 40,
+			font.drawString(SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 4 + 35,
 					SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 30, String.format("Game Over"),
 					Color.black);
 			font.drawString(SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 4 + 45,
 					SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 90, String.format("Score: %d", score),
 					Color.black);
+			font.drawString(SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 4 + 20,
+					SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 120, String.format("High score: %d", highScore),
+					Color.black);
 			font.drawString(SCREEN_SIZE_WIDTH / 2 - texture.getImageWidth() / 2 + 20,
-					SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 150,
+					SCREEN_SIZE_HEIGHT / 2 - texture.getImageHeight() / 2 + 170,
 					String.format("Press Enter to restart the game"), Color.black);
 			if (Keyboard.isKeyDown(Keyboard.KEY_RETURN)) {
 				cleanup();
@@ -327,16 +361,15 @@ public class Game {
 	}
 
 	private void logicHero() {
-
 		if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
 			if (heroEntity.getX() + heroEntity.getWidth() + 10 < Display.getDisplayMode().getWidth()) {
-				heroEntity.setX(heroEntity.getX() + 10);
+				heroEntity.setX(heroEntity.getX() + heroSpeed);
 			}
 		}
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
 			if (heroEntity.getX() - 10 >= 0) {
-				heroEntity.setX(heroEntity.getX() - 10);
+				heroEntity.setX(heroEntity.getX() - heroSpeed);
 			}
 		}
 	}
@@ -380,6 +413,15 @@ public class Game {
 			TreasureEntity treasureEntity = (TreasureEntity) object;
 			levelsTreasures.get(0).remove(treasureEntity);
 			setTreasuresCollected(getTreasuresCollected() + 1);
+			
+			// increase speed
+			if (treasuresCollected % 10 == 0 && treasuresCollected > 0 && speed <= 15) {
+				speed++;
+			}
+			if (treasuresCollected % 20 == 0 && treasuresCollected > 0 && heroSpeed <= 20) {
+				heroSpeed++;
+			}
+			
 		} else if (object instanceof MineEntity) {
 			levelsMines.get(0).remove(object);
 			lifes--;

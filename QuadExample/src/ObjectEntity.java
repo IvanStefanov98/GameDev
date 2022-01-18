@@ -7,6 +7,6 @@ public class ObjectEntity extends Entity {
 
 	@Override
 	public void collidedWith(Entity other) {
-		System.out.println("Collision detected ObjectEntity");
+		// System.out.println("Collision detected ObjectEntity");
 	}
 }

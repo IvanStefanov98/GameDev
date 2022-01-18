@@ -19,7 +19,7 @@ import java.awt.Font;
 
 public class Game {
 
-	public static final String GAME_TITLE = "My Game";
+	public static final String GAME_TITLE = "Run & Jump";
 	private static int SCREEN_SIZE_WIDTH = 800;
 	private static int SCREEN_SIZE_HEIGHT = 600;
 	private static final int FRAMERATE = 60;
@@ -263,6 +263,9 @@ public class Game {
 				entity.setX(newX);
 				entity.setY(newY);
 			}
+			if (lifes == 0) {
+				entity.setVisible(false);
+			}
 		}
 		
 		for (int i = 0; i < bombs.size(); i++) {
@@ -279,6 +282,9 @@ public class Game {
 				int newY = ThreadLocalRandom.current().nextInt(-MAX_SPAWN_HEIGHT - entity.getHeight(), - entity.getHeight());
 				entity.setX(newX);
 				entity.setY(newY);
+			}
+			if (lifes == 0) {
+				entity.setVisible(false);
 			}
 		}
 	}
